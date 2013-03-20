@@ -1,3 +1,7 @@
+\lab{Applications}{Job Search Model}{Job Search Model}
+
+\objective{This section describes a model of job search and solves it by dynamic programming.}
+
 \section*{Discrete Choice (Threshold) Problems}\label{SecDiscrChoice}
 
 One powerful application of dynamic programming that illustrates its versatility as a dynamic solution method is to models that have both continuous and discrete state variables. These models are sometimes referred to as discrete choice problems or optimal stopping problems.  Examples include models of employment that involve both the choice of whether to work and how much to work, models of firm entry and exit that involve the choice of both whether to produce and how much to produce, and models of marriage that involve the choice of whether to date (get married or keep dating) and how much to date.
@@ -44,14 +48,14 @@ In summary, the labor search discrete choice problem is characterized by the val
 
 The value function iteration solution method for the equilibrium in the labor search problem is analogous to the value function iteration from the previous labs. The only difference is that two value functions ($V^E$ and $V^U$) must converge to a fixed point in this problem instead of just one value function converging in the previous problems.  Although there are two value functions to consider, there is only one policy function since decisions are only made in the unemployed state.  Thus there is only one policy function to iterate on in the case of policy or modified policy iteration.
 
-Assume that the probability of becoming unemployed in a given period is $\gamma = 0.10$, the fraction of wages paid in unemployment benefits is $\alpha = 0.5$, and the discount factor is $\beta = 0.9$. Assume that the log of wage offers are distributed normally.  We then say that offers are distributed lognormally and write $w'\sim \text{LogN}(\mu,\sigma)$.  We let $m=20$ be the mean wage, $v=400$ be the variance of the wage.  Often lognormal distributions are reported with the mean and variance of $\log(w')$ which is distributed normally, but for simplicity you will not have to deal with that here. This is a convenient choice for the distribution of wage offers.  Among other things, it guarantees that wage offers will be positive.  Denote the cdf of the lognormal distribution as $F(w')$ and the pdf of the distribution as $f(w')$.
+Assume that the probability of becoming unemployed in a given period is $\gamma = 0.10$, the fraction of wages paid in unemployment benefits is $\alpha = 0.5$, and the discount factor is $\beta = 0.9$. Assume that the log of wage offers are distributed normally.  We then say that offers are distributed lognormally and write $w'\sim \text{LogN}(\mu,\sigma)$.  We let $m=20$ be the mean wage, $v=200$ be the variance of the wage.  Often lognormal distributions are reported with the mean and variance of $\log(w')$ which is distributed normally, but for simplicity you will not have to deal with that here. This is a convenient choice for the distribution of wage offers.  Among other things, it guarantees that wage offers will be positive.  Denote the cdf of the lognormal distribution as $F(w')$ and the pdf of the distribution as $f(w')$.
 
 \vspace{5mm}
 
 \begin{problem}
 \begin{enumerate}
 
-   \item Approximate the support of $w\in(0,\infty)$ by generating a column vector of possible values for $w$. Let the maximum value be $w_{max} = 100$, let the minimum value be $w_{min} = 0$, and let the number of equally spaced points in the vector be $N = 500$. Let the wage of a job offer in any period be lognormally distributed with mean job offer of $m=20$ and variance $v =200$.  Generate the discrete approximation of the lognormal probability density function $f(w')$ using the function defined in discretelognorm.py which is provided.  As arguments, it takes the points where the approximation is needed (w), along with the mean and variance so that it can be called as
+   \item Approximate the support of $w\in(0,\infty)$ by generating a column vector of possible values for $w$. Let the maximum value be $w_{max} = 100$, let the minimum value be $w_{min} = 0$, and let the number of equally spaced points in the vector be $N = 500$. Again, let $u(w) = \sqrt{w}$.  Let the wage of a job offer in any period be lognormally distributed with mean job offer of $m=20$ and variance $v =200$.  Generate the discrete approximation of the lognormal probability density function $f(w')$ using the function defined in discretelognorm.py which is provided.  As arguments, it takes the points where the approximation is needed (w), along with the mean and variance so that it can be called as
 
 \begin{lstlisting}[style=python]
 f = discretelognorm(w,m,v)
@@ -59,7 +63,11 @@ f = discretelognorm(w,m,v)
 
     Then the $n$th entry of $f$ represents the probability that the job offer in the next period equals the $n$th entry of $w$, $\text{Pr}(w' = w_n)$.
 
-   \item Solve for the equilibrium optimal policy function $s' = \psi(w,w')$ by value function iteration.  In this case we iterate on both value functions $V^E$ and $V^U$ each time through the loop.  In order to compute the expected value of $V^U$, just matrix multiply $V^U$ and $f$. Remember, the policy function $\psi(w,w')$ gives the choice of whether to accept the job offer if unemployed with a given previous wage and current job offer.  Thus it will be a vector of length $N$ of zeros and ones.  Again, use a tolerance level of $10^{-9}$ and require that both value functions must converge (compute a delta for each and iterate until both are less than $10^{-9}$).
+   \item Solve for the equilibrium optimal policy function $s' = \psi(w,w')$ by value function iteration.  In this case we iterate on both value functions $V^E$ and $V^U$ each time through the loop.  Note that $V^U$ is $N\times N$ while $V^E$ is $N\times 1$.  In particular notice that inside of the max in \eqref{EqVu} we have two quantities.  The first is one-dimensional (depends only on $w'$).  The second is also one-dimensional (depends only on w after the expectation is taken).  Be careful, because they are both one-dimensional, but along different dimensions.  Thus before maximizing you will need to make them each two dimensional.  One will be constant along rows, the other will be constant along columns.  The result of the max should also be $N\times N$.
+        
+       In order to compute the expected value of $V^U$, just matrix multiply $V^U$ and $f$.
+       
+       Remember, the policy function $\psi(w,w')$ gives the choice of whether to accept the job offer if unemployed with a given previous wage and current job offer.  Thus it will be a vector of length $N$ of zeros and ones.  Again, use a tolerance level of $10^{-9}$ and require that both value functions must converge (compute a delta for each and iterate until both are less than $10^{-9}$).
 
    \item Compute the reservation wage $w_R'$ as a function of the current wage $w$.  The reservation wage is the value of $w$ where the policy function changes from zeros to ones (the optimal choice changes from remaining unemployed to accepting the job offer).  If psi is an $N\times N$ matrix representing the policy function, the reservation wage wr could be computed as follows
    \begin{lstlisting}[style = python]
@@ -101,7 +109,7 @@ Solve the same problem, this time using modified policy function iteration with 
 \newpage
 	where the ordering is such that $1$ corresponds to the state $E$ and $0$ corresponds to the state $U$.
 	
-	\item Compute the $\delta$'s.
+	\item Compute the $\delta$.
 	
 	\item After the while loop you should compute the reservation wage and plot it.
 \end{enumerate}
