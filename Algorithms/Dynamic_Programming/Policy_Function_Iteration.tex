@@ -5,7 +5,7 @@
 Now that we have covered how to solve simple dynamic programming problems by value function iteration, we consider the convergence of the algorithm.  We demonstrate two other methods known as policy function iteration, or Howard's Improvement, and modified policy function iteration.
 
 \section*{Policy Function Iteration}
-For infinite horizon dynamic programming problems, it can be shown that value function iteration converges at the rate $\beta$, where $\beta$ is the discount factor.  In practice, $\beta$ is usually close to one which means this algorithm often converges slowly.  
+For infinite horizon dynamic programming problems, it can be shown that value function iteration converges at the rate $\beta$, where $\beta$ is the discount factor.  In practice, $\beta$ is usually close to one which means this algorithm often converges slowly.
 
 In order to examine the value function iteration algorithm, it is helpful to see which functions take the most runtime.
 
@@ -26,7 +26,7 @@ In problem 1 you should have noticed that runtime was significantly longer to ru
 \begin{lstlisting}[style=python]
 %run -p -s cum Value_Function_Iteration.py
          622 function calls in 2.542 seconds
-         
+
    Ordered by: cumulative time
 
    ncalls  tottime  percall  cumtime  percall filename:lineno(function)
@@ -39,7 +39,7 @@ In problem 1 you should have noticed that runtime was significantly longer to ru
        59    0.612    0.010    0.612    0.010 {method 'max' of 'numpy.ndarray' objects}
 \end{lstlisting}
 
-We notice that the most time was spent in the maximization step.  Remember, the value function iteration method maximizes $V$ (and determines the corresponding $\psi$) at every step.  Because we find both a new $V$ and a new $\psi$ at every step, we only apply the new policy function for one iteration.  This gives us a crude approximation to the value function that corresponds to the new policy function, resulting in slow convergence of the value function.  Instead, we might consider finding the exact value function associated with each new policy function.  
+We notice that the most time was spent in the maximization step.  Remember, the value function iteration method maximizes $V$ (and determines the corresponding policy function $\psi$) at every step.  Because we find both a new $V$ and a new $\psi$ at every step, we only apply the new policy function for one iteration.  This gives us a crude approximation to the value function that corresponds to the new policy function, resulting in slow convergence of the value function.  Instead, we might consider finding the exact value function associated with each new policy function.
 
 This is the idea behind the policy function iteration algorithm.  In this way we iterate on the policy functions rather than the value functions.  The algorithm for the policy function iteration can be summarized as follows:
 
@@ -48,13 +48,14 @@ This is the idea behind the policy function iteration algorithm.  In this way we
 	
 	\item Compute the value function assuming this rule is used forever:
 \begin{equation}
-V(W_0) = \sum_{t=0}^\infty \beta^t u(\psi_k(W)-W)
+V_k(W) = \sum_{t=0}^\infty \beta^t u(W-\psi_k(W))
 \end{equation}
 
+    We will discuss how to compute this below.
 
 	\item Determine a new policy $\psi_{k+1}$ so that
 	\begin{equation}
-		\psi_{k+1}(W) = \text{argmax}_{W'} u(W-W') + \beta V(W-W')
+		\psi_{k+1}(W) = \text{argmax}_{W'}\left\{ u(W-W') + \beta V_k(W-W') \right\}
 	\end{equation}
 	
 	\item If $\delta_k = ||\psi_{k+1} - \psi_k|| < \delta$, stop, otherwise go back to step b with subscript $k+1$.
@@ -104,14 +105,13 @@ I = sp.sparse.identity(N)
     Q = sp.sparse.coo_matrix((data,(rows,columns)),shape = (N,N))
     Q = Q.tocsr()
 \end{lstlisting}
-
-where $N$ is the size of the $W$ grid.  Rather than compute $(I-\beta Q)^{-1}$ directly, use scipy's sparse solver
+where $N$ is the size of the $W$ grid and psi\_ind is the vector of indices of $W'$ for a given $W$ according to the current policy (psi\_ind is obtained from the argmax step).  Rather than compute $(I-\beta Q)^{-1}$ directly, use scipy's sparse solver
 
 \begin{lstlisting}[style=python]
-V = spsolve(I-beta*Q,u(W-W[psi_ind]))
+V = spsolve(I-beta*Q,u(W-W[psi_ind])).
 \end{lstlisting}
 
-where psi\_ind gives the indices of $W'$ for a given $W$ according to the current policy.  
+
 
 Take $N = 1000$ and $\beta = .95$.
 
@@ -122,14 +122,14 @@ Plot the policy function and compare with your policy function from the Value Fu
 
 While policy function iteration converges in fewer iterations, solving the linear system can be slow, especially for problems with a large state space.  There is an alternative to this called modified policy function iteration.
 
-In modified policy function iteration, we don't compute the exact value function corresponding to a policy.  Instead, at step (b) of the policy iteration algorithm we iterate $m$ times on the value function equation (Bellman equation) to get an approximation of the new value function.  This is faster than solving for the exact value function for large state spaces.  There is no strict rule on the value of $m$, the number of value function iterations.  In practice values such as $m=10$ or $m=15$ often work well.
+In modified policy function iteration, we don't compute the exact value function corresponding to a policy.  Instead, at step (b) of the policy iteration algorithm we iterate $m$ times on the value function equation \eqref{linear} to get an approximation of the new value function.  This is faster than solving for the exact value function for large state spaces.  There is no strict rule on the value of $m$, the number of value function iterations.  In practice values such as $m=10$ or $m=15$ often work well.
 
 Note that our methods for solving dynamic programs boil down to some combination of two things: iterating on the value function and iterating on the policy function.  Modified policy function does a combination of the two, taking advantage of the advantages of both methods.  Because modified policy iteration takes only slightly more work to code than value function iteration, it is often preferred in practice.  Whether policy or modified policy iteration will perform better may depend on the problem.
 
 \begin{problem}
 Solve the same problem as in problem 2, this time using the modified policy function iteration method with $m=15$.  In this case let convergence be determined in the same way (computing $\delta_k$) in the same way as in the value function iteration problem.
 
-Use the same code as in problem 2 to initialize the sparse matrix $Q$.
+Use the same code as in problem 2 to initialize the sparse matrix $Q$.  It is also useful to note that you can matrix multiply the sparse matrix $Q$ with the value function vector $V$ by the command Q.dot(V).
 \end{problem}
 
 \begin{problem}
